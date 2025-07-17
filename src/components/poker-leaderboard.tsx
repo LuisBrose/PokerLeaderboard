@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import {
   Card,
   CardContent,
@@ -191,7 +191,7 @@ export function PokerLeaderboard() {
           <div className="grid flex-1 gap-1">
             <CardTitle>Poker Performance History</CardTitle>
             <CardDescription>
-              Running totals across all poker sessions (every round visible)
+              Cumulative profit/loss over time - each player&apos;s running total across all sessions
             </CardDescription>
           </div>
           <Select value={timeRange} onValueChange={setTimeRange}>
@@ -222,27 +222,14 @@ export function PokerLeaderboard() {
             config={chartConfig}
             className="aspect-auto h-[400px] w-full"
           >
-            <AreaChart data={filteredChartData}>
-              <defs>
-                {Object.entries(chartConfig).map(([player, config]) => {
-                  if (player === 'winnings') return null
-                  return (
-                    <linearGradient key={player} id={`fill${player}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop
-                        offset="5%"
-                        stopColor={config.color}
-                        stopOpacity={0.8}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor={config.color}
-                        stopOpacity={0.1}
-                      />
-                    </linearGradient>
-                  )
-                })}
-              </defs>
+            <LineChart data={filteredChartData}>
               <CartesianGrid vertical={false} />
+              <YAxis 
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => formatCurrency(value)}
+              />
               <XAxis
                 dataKey="date"
                 tickLine={false}
@@ -268,10 +255,14 @@ export function PokerLeaderboard() {
                       }
                       return `Session: ${value}`
                     }}
-                    formatter={(value, name) => [
-                      `${name}: ${formatCurrency(value as number)}`,
-                      null,
-                    ]}
+                    formatter={(value, name) => {
+                      // Hide entries with €0
+                      if (value === 0) return [null, null]
+                      return [
+                        `${name}: ${formatCurrency(value as number)}`,
+                        null,
+                      ]
+                    }}
                     indicator="dot"
                   />
                 }
@@ -279,19 +270,18 @@ export function PokerLeaderboard() {
               {Object.keys(chartConfig).map((player) => {
                 if (player === 'winnings') return null
                 return (
-                  <Area
+                  <Line
                     key={player}
                     dataKey={player}
-                    type="natural"
-                    fill={`url(#fill${player})`}
+                    type="monotone"
                     stroke={chartConfig[player]?.color}
                     strokeWidth={2}
-                    stackId="a"
+                    dot={false}
                   />
                 )
               })}
               <ChartLegend content={<ChartLegendContent />} />
-            </AreaChart>
+            </LineChart>
           </ChartContainer>
         </CardContent>
       </Card>
@@ -356,3 +346,4 @@ export function PokerLeaderboard() {
     </div>
   )
 } 
+ 

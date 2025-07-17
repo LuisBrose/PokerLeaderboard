@@ -20,7 +20,7 @@ export interface ChartDataPoint {
 }
 
 export function parseCsvContent(content: string): { players: string[], results: number[][] } {
-  const lines = content.trim().split('\n');
+  const lines = content.trim().split('\n').filter(line => line.trim() !== '');
   if (lines.length < 2) {
     throw new Error('CSV must have at least a header and one data row');
   }
@@ -29,7 +29,17 @@ export function parseCsvContent(content: string): { players: string[], results: 
   const results: number[][] = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map(val => parseFloat(val.trim()));
+    const line = lines[i].trim();
+    if (!line) continue; // Skip empty lines
+    
+    const values = line.split(',').map(val => {
+      const parsed = parseFloat(val.trim());
+      if (isNaN(parsed)) {
+        throw new Error(`Invalid number "${val.trim()}" in row ${i + 1}`);
+      }
+      return parsed;
+    });
+    
     if (values.length !== players.length) {
       throw new Error(`Row ${i + 1} has ${values.length} values but expected ${players.length}`);
     }
@@ -45,9 +55,10 @@ export function getSessionNameFromFilename(filename: string): string {
 
 // List of CSV files to load (you can update this list when you add new files)
 const CSV_FILES = [
-  '2024-01-15.csv',
-  '2024-01-22.csv',
-  '2024-02-05.csv'
+  '2025-07-16.csv',
+  '2025-07-09.csv',
+  '2025-04-02.csv',
+  '2024-08-16.csv',
 ];
 
 export async function loadAllSessions(): Promise<SessionData[]> {
@@ -55,10 +66,8 @@ export async function loadAllSessions(): Promise<SessionData[]> {
   
   for (const filename of CSV_FILES) {
     try {
-      const url = typeof window !== 'undefined' 
-        ? `${window.location.origin}/data/${filename}`
-        : `http://localhost:3000/data/${filename}`;
-        
+      // Use relative URL that works with both custom domain and GitHub Pages
+      const url = `/data/${filename}`;
       const response = await fetch(url);
       if (!response.ok) {
         console.warn(`Could not fetch ${filename}: ${response.status}`);

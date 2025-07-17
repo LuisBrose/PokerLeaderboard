@@ -55,7 +55,7 @@ jobs:
       - name: Build with Next.js
         run: npm run build
         env:
-          PAGES_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
+          CUSTOM_DOMAIN: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

@@ -6,8 +6,9 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true
   },
-  basePath: process.env.PAGES_BASE_PATH || '',
-  assetPrefix: process.env.PAGES_BASE_PATH || '',
+  // Only use base path for GitHub Pages default domain, not custom domains
+  basePath: process.env.GITHUB_ACTIONS && !process.env.CUSTOM_DOMAIN ? '/PokerLeaderboard' : '',
+  assetPrefix: process.env.GITHUB_ACTIONS && !process.env.CUSTOM_DOMAIN ? '/PokerLeaderboard' : '',
 };
 
 export default nextConfig;
