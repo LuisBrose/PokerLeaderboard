@@ -55,6 +55,7 @@ export function getSessionNameFromFilename(filename: string): string {
 
 // List of CSV files to load (you can update this list when you add new files)
 const CSV_FILES = [
+  '2025-08-13.csv',
   '2025-07-16.csv',
   '2025-07-09.csv',
   '2025-04-02.csv',
