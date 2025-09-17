@@ -48,10 +48,47 @@ function ChartContainer({
 }) {
   const uniqueId = React.useId()
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
+  const providerValue = React.useMemo(() => ({ config }), [config])
+
+  const containerRef = React.useRef<HTMLDivElement | null>(null)
+  const [containerSize, setContainerSize] = React.useState<{ width: number; height: number }>({ width: 0, height: 0 })
+
+  React.useEffect(() => {
+    const node = containerRef.current
+    if (!node) return
+
+    const updateSize = () => {
+      const rect = node.getBoundingClientRect()
+      setContainerSize({ width: Math.floor(rect.width), height: Math.floor(rect.height) })
+    }
+
+    updateSize()
+
+    let resizeObserver: ResizeObserver | null = null
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => updateSize())
+      resizeObserver.observe(node)
+    }
+
+    const onOrientationChange = () => {
+      // Small timeout lets layout settle before measuring
+      setTimeout(updateSize, 150)
+    }
+    window.addEventListener("orientationchange", onOrientationChange)
+
+    return () => {
+      window.removeEventListener("orientationchange", onOrientationChange)
+      if (resizeObserver && node) resizeObserver.unobserve(node)
+    }
+  }, [])
+
+  const widthProp: number | string = containerSize.width > 0 ? containerSize.width : "100%"
+  const heightProp: number | string = containerSize.height > 0 ? containerSize.height : "100%"
 
   return (
-    <ChartContext.Provider value={{ config }}>
+    <ChartContext.Provider value={providerValue}>
       <div
+        ref={containerRef}
         data-slot="chart"
         data-chart={chartId}
         className={cn(
@@ -61,7 +98,7 @@ function ChartContainer({
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
+        <RechartsPrimitive.ResponsiveContainer key={`${widthProp}-${heightProp}`} width={widthProp} height={heightProp}>
           {children}
         </RechartsPrimitive.ResponsiveContainer>
       </div>
@@ -86,13 +123,13 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
             ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
-  })
-  .join("\n")}
+                .map(([key, itemConfig]) => {
+                  const color =
+                    itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
+                    itemConfig.color
+                  return color ? `  --color-${key}: ${color};` : null
+                })
+                .join("\n")}
 }
 `
           )
@@ -270,7 +307,7 @@ function ChartLegendContent({
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-4",
+        "flex flex-wrap items-center justify-center gap-4 w-full whitespace-normal break-words",
         verticalAlign === "top" ? "pb-3" : "pt-3",
         className
       )}
@@ -283,7 +320,7 @@ function ChartLegendContent({
           <div
             key={item.value}
             className={cn(
-              "[&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3"
+              "[&>svg]:text-muted-foreground flex flex-wrap items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 max-w-full min-w-0"
             )}
           >
             {itemConfig?.icon && !hideIcon ? (
@@ -309,38 +346,30 @@ function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,
   key: string
-) {
+): ChartConfig[string] | undefined {
   if (typeof payload !== "object" || payload === null) {
     return undefined
   }
 
-  const payloadPayload =
-    "payload" in payload &&
-    typeof payload.payload === "object" &&
-    payload.payload !== null
-      ? payload.payload
-      : undefined
+  type PayloadLike = { [k: string]: unknown; payload?: Record<string, unknown> }
+  const typedPayload = payload as PayloadLike
+  const innerPayload = typedPayload.payload
 
   let configLabelKey: string = key
 
-  if (
-    key in payload &&
-    typeof payload[key as keyof typeof payload] === "string"
-  ) {
-    configLabelKey = payload[key as keyof typeof payload] as string
+  if (key in typedPayload && typeof typedPayload[key] === "string") {
+    configLabelKey = typedPayload[key] as string
   } else if (
-    payloadPayload &&
-    key in payloadPayload &&
-    typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
+    innerPayload &&
+    key in innerPayload &&
+    typeof innerPayload[key] === "string"
   ) {
-    configLabelKey = payloadPayload[
-      key as keyof typeof payloadPayload
-    ] as string
+    configLabelKey = innerPayload[key] as string
   }
 
-  return configLabelKey in config
+  return (configLabelKey in config
     ? config[configLabelKey]
-    : config[key as keyof typeof config]
+    : config[key as keyof typeof config]) as ChartConfig[string] | undefined
 }
 
 export {

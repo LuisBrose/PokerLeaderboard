@@ -31,7 +31,7 @@ export function parseCsvContent(content: string): { players: string[], results: 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue; // Skip empty lines
-    
+
     const values = line.split(',').map(val => {
       const parsed = parseFloat(val.trim());
       if (isNaN(parsed)) {
@@ -39,7 +39,7 @@ export function parseCsvContent(content: string): { players: string[], results: 
       }
       return parsed;
     });
-    
+
     if (values.length !== players.length) {
       throw new Error(`Row ${i + 1} has ${values.length} values but expected ${players.length}`);
     }
@@ -61,11 +61,10 @@ const CSV_FILES = [
   '2025-04-02.csv',
   '2024-08-16.csv',
   '2025-09-17.csv',
-    
 ];
 export async function loadAllSessions(): Promise<SessionData[]> {
   const sessions: SessionData[] = [];
-  
+
   for (const filename of CSV_FILES) {
     try {
       // Use relative URL that works with both custom domain and GitHub Pages
@@ -75,11 +74,11 @@ export async function loadAllSessions(): Promise<SessionData[]> {
         console.warn(`Could not fetch ${filename}: ${response.status}`);
         continue;
       }
-      
+
       const content = await response.text();
       const { players, results } = parseCsvContent(content);
       const sessionName = getSessionNameFromFilename(filename);
-      
+
       const sessionData: SessionData = {
         sessionName,
         date: sessionName,
@@ -109,7 +108,7 @@ export function calculatePlayerTotals(sessions: SessionData[]): PlayerTotal[] {
   sessions.forEach(session => {
     Object.entries(session.results).forEach(([playerName, balanceChanges]) => {
       const sessionTotal = balanceChanges.reduce((sum, value) => sum + value, 0);
-      
+
       if (!playerTotals[playerName]) {
         playerTotals[playerName] = {
           name: playerName,
