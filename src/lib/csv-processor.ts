@@ -61,7 +61,8 @@ const CSV_FILES = [
   '2025-04-02.csv',
   '2024-08-16.csv',
   '2025-09-17.csv',
-  '2025-10-08.csv'
+  '2025-10-08.csv',
+  '2025-10-22.csv'
 ];
 export async function loadAllSessions(): Promise<SessionData[]> {
   const sessions: SessionData[] = [];
