@@ -351,12 +351,12 @@ export function PokerLeaderboard() {
                     <div className="font-medium break-words">{formatDate(session.sessionName)}</div>
                     <div className="text-muted-foreground text-xs sm:text-sm mt-1 flex flex-wrap gap-x-3 gap-y-1">
                       <span>
-                        👑 <span className="font-medium">{topPlayer?.name}</span>{" "}
+                        ↑ <span className="font-medium">{topPlayer?.name}</span>{" "}
                         <span className={cn("font-mono", topPlayer && topPlayer.total >= 0 ? "text-green-600" : "text-red-600")}> {formatCurrency(topPlayer?.total ?? 0)}</span>
                       </span>
                       <span className="hidden sm:inline">|</span>
                       <span>
-                        💀 <span className="font-medium">{bottomPlayer?.name}</span>{" "}
+                        ↓ <span className="font-medium">{bottomPlayer?.name}</span>{" "}
                         <span className={cn("font-mono", bottomPlayer && bottomPlayer.total >= 0 ? "text-green-600" : "text-red-600")}> {formatCurrency(bottomPlayer?.total ?? 0)}</span>
                       </span>
                     </div>
